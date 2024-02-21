@@ -1,0 +1,64 @@
+1. Start with an empty Tanner graph with M symbol nodes and N check nodes.
+
+2. Initialize the set of active symbol nodes:
+   active_symbol_nodes = {1, 2, ..., M} // Symbol nodes are initially all active.
+
+3. Initialize the set of active check nodes:
+   active_check_nodes = {} // Initially, there are no active check nodes.
+
+4. For each symbol node i from 0 to M-1:
+      Initialize the degree of symbol node i: d_i
+      Initialize the covered check nodes for symbol node i: covered_check_nodes_i = {}
+      Initialize the uncovered check nodes for symbol node i: uncovered_check_nodes_i = {all check nodes}
+
+      for j from 0 to d_i - 1:
+          if j == 0:
+              // Create the first edge incident to symbol node i
+              find check node c_x with the lowest degree in uncovered_check_nodes_i
+              Create edge (s_i, c_x)
+              Increment degree of c_x and s_i
+              Remove c_x from uncovered_check_nodes_i
+              Add c_x to covered_check_nodes_i
+
+              // Check for all check nodes in the extended subgraph of s_i
+              extended_subgraph = DepthFirstSearch(s_i) // Builds a tree with s_i at the root
+              Add uncovered check nodes in extended_subgraph to covered_check_nodes_i
+
+          else:
+              if uncovered_check_nodes_i is not empty:
+                  // There are nodes not covered by the current subgraph
+                  find check node c_x with the lowest degree in uncovered_check_nodes_i
+              else:
+                  // All check nodes in the subgraph are covered, find farthest uncovered check nodes
+                  find check node c_x with the lowest degree among previously uncovered_check_nodes_i
+                  
+              Create edge (s_i, c_x)
+              Increment degree of c_x and s_i
+              Remove c_x from uncovered_check_nodes_i
+              Add c_x to covered_check_nodes_i
+
+      // Remove symbol node i from active_symbol_nodes
+      Remove i from active_symbol_nodes
+
+      // Add symbol node i to active_check_nodes for future connections
+      Add i to active_check_nodes
+
+5. Repeat step 4 until all symbol nodes have reached their desired degree.
+
+6. Once the desired degrees are reached, the Tanner graph represents the LDPC code.
+
+// Function to perform Depth First Search from symbol node s_i
+Function DepthFirstSearch(s_i):
+    Initialize visited nodes as empty
+    Initialize stack with s_i
+    Initialize extended_subgraph as empty
+    while stack is not empty:
+        node = Pop(stack)
+        if node is not in visited:
+            Add node to visited
+            if node is a check node:
+                Add node to extended_subgraph
+            for each neighbor of node:
+                if neighbor is a check node and not in visited:
+                    Add neighbor to stack
+    Return extended_subgraph
