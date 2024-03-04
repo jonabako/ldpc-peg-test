@@ -1,87 +1,76 @@
-import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 
-class SymbolNode:
-    def __init__(self, id):
-        self.id = id
-        self.subgraph = []
+def create_graph(n, m, s_node_degrees):
+    # Create an empty graph
+    G = nx.Graph()
 
-class CheckNode:
-    def __init__(self, id):
-        self.id = id
+    # Create symbol nodes (s_type)
+    s_nodes = ['s{}'.format(i) for i in range(n)]
+    G.add_nodes_from(s_nodes, node_type='s')
 
-def select_check_node(check_nodes, subgraph_check_nodes, symbol_node, check_degrees):
-    num_check_nodes = len(check_nodes)
-    num_covered_check_nodes = sum(1 for node in subgraph_check_nodes if node in check_nodes)
-    num_uncovered_nodes = num_check_nodes - num_covered_check_nodes
+    # Create check nodes (c_type)
+    c_nodes = ['c{}'.format(i) for i in range(m)]
+    G.add_nodes_from(c_nodes, node_type='c')
+
+    # Ask for connections between s-nodes and c-nodes
+    for s_node, degree in zip(s_nodes, s_node_degrees):
+        for _ in range(degree):
+            c_index = int(input(f"Enter index of a c-node connected to {s_node}: "))
+            if c_index >= m:
+                print(f"Error: Invalid c-node index {c_index}.")
+                return
+            c_node = 'c{}'.format(c_index)
+            G.add_edge(s_node, c_node)
     
-    if num_uncovered_nodes > 0:
-        return min(set(check_nodes) - set(subgraph_check_nodes), key=lambda node: check_degrees[node])
-    else:
-        prev_subgraph = nx.shortest_path_length(symbol_node.graph, source=symbol_node, target=None)
-        uncovered_nodes = set(check_nodes) - set(prev_subgraph.keys())
-        return min(uncovered_nodes, key=lambda node: check_degrees[node])
+    return G
 
-def update_subgraphs(ldpc_matrix, symbol_node, check_node, symbol_nodes):
-    for node in symbol_nodes:
-        if node.id == symbol_node.id:
-            node.subgraph.append(check_node)
-        elif ldpc_matrix[check_node.id][node.id] == 1:
-            node.subgraph.append(check_node)
+# Ask for n and m
+n = int(input("Number of symbol nodes (n): "))
+m = int(input("Number of check nodes (m): "))
+s_node_degrees = list(map(int, input("S-node degrees (comma separated): ").split(',')))
 
-def print_matrix(matrix):
-    for row in matrix:
-        print(" ".join(map(str, row)))
+# Create the graph
+graph = create_graph(n, m, s_node_degrees)
 
-def progressive_edge_growth(num_symbol_nodes, num_check_nodes, symbol_degrees):
-    # Initialize LDPC matrix and graph
-    ldpc_matrix = np.zeros((num_check_nodes, num_symbol_nodes), dtype=int)
-    symbol_nodes = [SymbolNode(id=i) for i in range(num_symbol_nodes)]
-    check_nodes = [CheckNode(id=i) for i in range(num_check_nodes)]
-    check_degrees = {node: 0 for node in check_nodes}
+# Divide nodes into 's' and 'c' nodes
+s_nodes = [node for node in graph.nodes if graph.nodes[node]['node_type'] == 's']
+c_nodes = [node for node in graph.nodes if graph.nodes[node]['node_type'] == 'c']
 
-    # Initialize graph
-    graph = nx.Graph()
-    for node in symbol_nodes:
-        graph.add_node(node)
-        node.graph = graph
+# Position nodes in two rows
+pos = {}
+for i, node in enumerate(s_nodes):
+    pos[node] = (i, 1)  # Top row
 
-    for node in check_nodes:
-        graph.add_node(node)
+for i, node in enumerate(c_nodes):
+    pos[node] = (i, 0)  # Bottom row
 
-    edge_number = 1
-    for symbol_node in symbol_nodes:
-        for _ in range(symbol_degrees[symbol_node.id]):
-            print(f"Processing edge {edge_number}:")
-            if _ == 0:
-                check_node = min(check_nodes, key=lambda node: check_degrees[node])
-            else:
-                uncovered_nodes = set(check_nodes) - set(symbol_node.subgraph)
-                if len(uncovered_nodes) > 0:
-                    check_node = min(uncovered_nodes, key=lambda node: check_degrees[node])
-                else:
-                    prev_subgraph = nx.shortest_path_length(symbol_node.graph, source=symbol_node, target=None)
-                    uncovered_nodes = set(check_nodes) - set(prev_subgraph.keys())
-                    check_node = min(uncovered_nodes, key=lambda node: check_degrees[node])
+# Draw the original graph with nodes in two rows
+plt.figure(figsize=(8, 4))  # Adjust figure size as needed
+nx.draw(graph, pos, with_labels=True, node_color=['aqua' if node in s_nodes else 'yellow' for node in graph.nodes], node_size=800, font_size=12, font_weight='bold')
+plt.title('Original Graph')
+plt.axis('off')
+plt.show()
 
-            ldpc_matrix[check_node.id][symbol_node.id] = 1
-            check_degrees[check_node] += 1
-            update_subgraphs(ldpc_matrix, symbol_node, check_node, symbol_nodes)
+# Choose a specific node for subgraph visualization
+selected_node = input(f"Select an 's' node to visualize its subgraph (e.g., s0, s1, ...): ")
 
-            print(f"Parity Check Matrix after processing edge {edge_number}:")
-            print_matrix(ldpc_matrix)
-            edge_number += 1
+# Check if the selected node is valid
+if selected_node not in s_nodes:
+    print("Error: Selected node is not a valid 's' node.")
+else:
+    depth = 2  # Depth of the subgraph
 
-    return ldpc_matrix
+    # Create the subgraph
+    subgraph = nx.ego_graph(graph, selected_node, radius=depth)
 
-def main():
-    num_symbol_nodes = int(input("Enter the number of symbol nodes: "))
-    num_check_nodes = int(input("Enter the number of check nodes: "))
-    symbol_degrees = list(map(int, input("Enter the degrees for symbol nodes separated by commas: ").split(',')))
+    # Divide nodes into 's' and 'c' nodes
+    subgraph_s_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 's']
+    subgraph_c_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 'c']
 
-    ldpc_matrix = progressive_edge_growth(num_symbol_nodes, num_check_nodes, symbol_degrees)
-    print("Final LDPC matrix:")
-    print_matrix(ldpc_matrix)
-
-if __name__ == "__main__":
-    main()
+    # Draw the subgraph with nodes in two colors
+    plt.figure(figsize=(6, 6))
+    nx.draw(subgraph, with_labels=True, node_color=['aqua' if node in subgraph_s_nodes else 'yellow' for node in subgraph.nodes], node_size=800, font_size=12, font_weight='bold')
+    plt.title(f'Subgraph of {selected_node} at depth {depth} (Vertical Tree Layout)')
+    plt.axis('off')
+    plt.show()
