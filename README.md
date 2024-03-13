@@ -1,11 +1,11 @@
-# JS Simulation Tool (for testing): 
+## JS Simulation Tool (for testing): 
 https://jonabako.github.io/ldpc-peg-test/
 
-#Using networkx and matplotlib.pyplot for graph genration:
+## Using networkx and matplotlib.pyplot for graph genration:
 
 ![image](https://github.com/jonabako/ldpc-peg-test/assets/87908322/1920750b-83ed-4256-82aa-0cb679738d71)
 
-# Core Steps of PEG Algorithm for edge creation:
+## Core Steps of PEG Algorithm for edge creation:
 
 The PEG algorithm starts with 3 parameters: number of check nodes, number of symbol nodes and the symbol degree sequence. The algorithm goes over the symbol nodes one by one and it starts working on another node only after all the edges required by that node's degree is established. 
 
