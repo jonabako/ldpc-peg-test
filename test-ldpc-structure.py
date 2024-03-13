@@ -1,7 +1,9 @@
+# Import necessary modules
 from builtins import any, enumerate, input, int, len, list, map, print, range, set, zip
 import networkx as nx
 import matplotlib.pyplot as plt
 
+# Function to create the graph
 def create_graph(n, m, s_node_degrees):
     # Create an empty graph
     G = nx.Graph()
@@ -26,6 +28,7 @@ def create_graph(n, m, s_node_degrees):
     
     return G
 
+# Function to create subgraph from a selected node
 def create_subgraph(graph, selected_node, depth):
     subgraph = nx.Graph()
     queue = [(selected_node, 0)]  # (node, level)
@@ -48,7 +51,7 @@ def create_subgraph(graph, selected_node, depth):
     
     return subgraph
 
-# Ask for n and m
+# Ask for user input for graph creation
 n = int(input("Number of symbol nodes (n): "))
 m = int(input("Number of check nodes (m): "))
 s_node_degrees = list(map(int, input("S-node degrees (comma separated): ").split(',')))
@@ -60,7 +63,7 @@ graph = create_graph(n, m, s_node_degrees)
 s_nodes = [node for node in graph.nodes if graph.nodes[node]['node_type'] == 's']
 c_nodes = [node for node in graph.nodes if graph.nodes[node]['node_type'] == 'c']
 
-# Position nodes in two rows
+# Position nodes in two rows for visualization
 pos = {}
 for i, node in enumerate(s_nodes):
     pos[node] = (i, 1)  # Top row
@@ -87,14 +90,14 @@ else:
     # Create the subgraph
     subgraph = create_subgraph(graph, selected_node, depth)
 
-    # Divide nodes into 's' and 'c' nodes
+    # Divide nodes into 's' and 'c' nodes in the subgraph
     subgraph_s_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 's']
     subgraph_c_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 'c']
 
     # Create fixed positions for nodes
     fixed_positions = {selected_node: (0.5, 1)}
 
-    # Keep track of nodes at each level
+    # Keep track of nodes at each level for dynamic placement
     nodes_at_level = {0: [selected_node]}  # Starting with selected node
 
     for d in range(1, depth + 1):
@@ -104,6 +107,7 @@ else:
             for neighbor in neighbors:
                 if neighbor not in fixed_positions:
                     nodes_at_level[d].append(neighbor)
+                    # Position nodes in rows based on depth
                     fixed_positions[neighbor] = (len(nodes_at_level[d]) - 0.5, 1 - d * 0.2)
 
     # Use spring layout with fixed positions for the subgraph
