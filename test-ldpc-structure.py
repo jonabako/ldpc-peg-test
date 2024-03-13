@@ -1,3 +1,4 @@
+from builtins import any, enumerate, input, int, len, list, map, print, range, set, zip
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -24,6 +25,28 @@ def create_graph(n, m, s_node_degrees):
             G.add_edge(s_node, c_node)
     
     return G
+
+def create_subgraph(graph, selected_node, depth):
+    subgraph = nx.Graph()
+    queue = [(selected_node, 0)]  # (node, level)
+    visited = set([selected_node])
+
+    while queue:
+        node, level = queue.pop(0)
+        if level > depth:
+            break
+        subgraph.add_node(node, node_type=graph.nodes[node]['node_type'])
+
+        if level < depth:
+            neighbors = graph.neighbors(node)
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    subgraph.add_node(neighbor, node_type=graph.nodes[neighbor]['node_type'])
+                    subgraph.add_edge(node, neighbor)
+                    queue.append((neighbor, level + 1))
+                    visited.add(neighbor)
+    
+    return subgraph
 
 # Ask for n and m
 n = int(input("Number of symbol nodes (n): "))
@@ -59,18 +82,35 @@ selected_node = input(f"Select an 's' node to visualize its subgraph (e.g., s0, 
 if selected_node not in s_nodes:
     print("Error: Selected node is not a valid 's' node.")
 else:
-    depth = 2  # Depth of the subgraph
+    depth = int(input("Enter depth for the subgraph: "))  # Depth of the subgraph
 
     # Create the subgraph
-    subgraph = nx.ego_graph(graph, selected_node, radius=depth)
+    subgraph = create_subgraph(graph, selected_node, depth)
 
     # Divide nodes into 's' and 'c' nodes
     subgraph_s_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 's']
     subgraph_c_nodes = [node for node in subgraph.nodes if subgraph.nodes[node]['node_type'] == 'c']
 
-    # Draw the subgraph with nodes in two colors
-    plt.figure(figsize=(6, 6))
-    nx.draw(subgraph, with_labels=True, node_color=['aqua' if node in subgraph_s_nodes else 'yellow' for node in subgraph.nodes], node_size=800, font_size=12, font_weight='bold')
-    plt.title(f'Subgraph of {selected_node} at depth {depth} (Vertical Tree Layout)')
+    # Create fixed positions for nodes
+    fixed_positions = {selected_node: (0.5, 1)}
+
+    # Keep track of nodes at each level
+    nodes_at_level = {0: [selected_node]}  # Starting with selected node
+
+    for d in range(1, depth + 1):
+        nodes_at_level[d] = []
+        for node in nodes_at_level[d - 1]:
+            neighbors = list(subgraph.neighbors(node))
+            for neighbor in neighbors:
+                if neighbor not in fixed_positions:
+                    nodes_at_level[d].append(neighbor)
+                    fixed_positions[neighbor] = (len(nodes_at_level[d]) - 0.5, 1 - d * 0.2)
+
+    # Use spring layout with fixed positions for the subgraph
+    plt.figure(figsize=(8, 6))
+    pos = nx.spring_layout(subgraph, pos=fixed_positions, fixed=fixed_positions.keys(), iterations=100)
+    nx.draw(subgraph, pos, with_labels=True, node_color=['aqua' if node in subgraph_s_nodes else 'yellow' for node in subgraph.nodes],
+            node_size=800, font_size=12, font_weight='bold')
+    plt.title(f'Subgraph of {selected_node} at depth {depth} (Fixed Edge Length)')
     plt.axis('off')
     plt.show()
