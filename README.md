@@ -1,9 +1,11 @@
 ## JS Simulation Tool (for testing): 
 https://jonabako.github.io/ldpc-peg-test/
 
-## Using networkx and matplotlib.pyplot for graph genration:
+## Using networkx and matplotlib.pyplot for graph & subgraph generation:
 
 ![image](https://github.com/jonabako/ldpc-peg-test/assets/87908322/1920750b-83ed-4256-82aa-0cb679738d71)
+
+![image](https://github.com/jonabako/ldpc-peg-test/assets/87908322/dc9f01d9-d28c-4b67-859c-272cf45473ae)
 
 ## Core Steps of PEG Algorithm for edge creation:
 
