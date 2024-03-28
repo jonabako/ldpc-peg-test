@@ -47,23 +47,14 @@ def create_graph(n, m, s_node_degrees):
                 if set(subgraph_c_nodes) == set(c_nodes):
                     # Connect s_i to the check node with the lowest degree among the farthest nodes in the subgraph
                     farthest_check_nodes = get_farthest_check_nodes(graph, s_i, depth, c_nodes, c_degrees)
-                    if farthest_check_nodes:
-                        min_degree = min([c_degrees[c_nodes.index(c)] for c in farthest_check_nodes])
-                        min_degree_c_nodes = [c for c in farthest_check_nodes if c_degrees[c_nodes.index(c)] == min_degree]
-                        c_node = min_degree_c_nodes[0]
-                        graph.add_edge(s_i, c_node)
-                        c_degrees[c_nodes.index(c_node)] += 1
-                        print("Edge Creation: Scenario #2.2")
-                        print_parity_check_matrix(graph, s_nodes, c_nodes)
-                    else:
-                        # If no farthest check nodes found, connect to the check node with the lowest degree
-                        min_degree = min(c_degrees)
-                        min_degree_c_nodes = [c_nodes[i] for i, deg in enumerate(c_degrees) if deg == min_degree]
-                        c_node = min_degree_c_nodes[0]
-                        graph.add_edge(s_i, c_node)
-                        c_degrees[c_nodes.index(c_node)] += 1
-                        print("Edge Creation: Scenario #2.2 (No farthest check nodes)")
-                        print_parity_check_matrix(graph, s_nodes, c_nodes)
+
+                    min_degree = min([c_degrees[c_nodes.index(c)] for c in farthest_check_nodes])
+                    min_degree_c_nodes = [c for c in farthest_check_nodes if c_degrees[c_nodes.index(c)] == min_degree]
+                    c_node = min_degree_c_nodes[0]
+                    graph.add_edge(s_i, c_node)
+                    c_degrees[c_nodes.index(c_node)] += 1
+                    print("Edge Creation: Scenario #2.2")
+                    print_parity_check_matrix(graph, s_nodes, c_nodes)
                 else:
                     # Connect s_i to check node with lowest degree among check nodes not present in the subgraph
                     check_nodes_not_in_subgraph = list(set(c_nodes) - set(subgraph_c_nodes))
@@ -88,8 +79,18 @@ def get_farthest_check_nodes(graph, selected_node, depth, c_nodes, c_degrees):
     # Find the nodes at the maximum depth in the subgraph
     max_depth_nodes = [node for node, node_depth in nx.shortest_path_length(subgraph, selected_node).items() if node_depth == depth]
 
+    # If no nodes are found at the maximum depth, try depth - 1
+    if not max_depth_nodes and depth > 0:
+        max_depth_nodes = [node for node, node_depth in nx.shortest_path_length(subgraph, selected_node).items() if node_depth == depth - 1]
+
     # Among these max_depth_nodes, filter out only the check nodes
     farthest_check_nodes = [node for node in max_depth_nodes if node in subgraph_c_nodes]
+
+    # If there are no farthest check nodes, use the check node with the lowest degree
+    if not farthest_check_nodes:
+        min_degree = min(c_degrees)
+        min_degree_c_nodes = [c_nodes[i] for i, deg in enumerate(c_degrees) if deg == min_degree]
+        farthest_check_nodes = [min_degree_c_nodes[0]]  # Use the first node with minimum degree
 
     # Sort farthest_check_nodes based on their degree in c_degrees
     farthest_check_nodes.sort(key=lambda x: c_degrees[c_nodes.index(x)])
