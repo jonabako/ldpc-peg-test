@@ -1,9 +1,3 @@
-## Python / React Simulation Tool
-https://jonabako.github.io/ldpc-peg-app/
-
-## JS Simulation Tool (for testing):
-https://jonabako.github.io/ldpc-peg-test/
-
 ## Using networkx and matplotlib.pyplot for graph & subgraph generation:
 
 ![image](https://github.com/jonabako/ldpc-peg-test/assets/87908322/1920750b-83ed-4256-82aa-0cb679738d71)
